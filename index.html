@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Распил</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=OpenSans:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --background-light: linear-gradient(to right, #f0f4f8, #e4e9f0);
+            --text-color-light: black;
+            --border-color: #ccc;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background: var(--background-light);
+            color: var(--text-color-light);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        h1 {
+            font-family: "Open Sans", Helvetica, Arial, sans-serif;
+            font-size: 140px;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-align: center;
+            color: #222222;
+        }
+
+        .btn.btn-primary {
+            padding: 10px 10px 10px 10px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px var(--shadow-color);
+            display: flex;
+            text-align: center;
+            gap: 5px;
+        }
+
+        .btn.btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .layout-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+
+        .canvas-container,
+        .parts-list {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .parts-list {
+            margin-top: 41px;
+            max-height: 1100px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 10px var(--shadow-color);
+        }
+
+        .part-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            transition: transform 0.2s;
+            gap: 5px;
+        }
+
+        .part-item:hover {
+            transform: scale(1.02);
+        }
+
+        /* Стили для скроллбара */
+        .parts-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .parts-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .parts-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 123, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .parts-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 123, 255, 0.8);
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 2px 5px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover,
+        button:focus,
+        button:active {
+            background-color: #0056b3;
+            outline: none;
+            box-shadow: none;
+        }
+
+        input[type="number"],
+        select,
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 100%;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        select:focus,
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            flex: 1;
+            margin: 0 10px;
+            color: #222222;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img class="photo" src="./фанера.svg">
+        <h1 class="text-center my-4">Распил</h1>
+
+        <div class="controls mb-4">
+            <div class="form-group">
+                <label for="sheetSize">Размер листа (мм):</label>
+                <select id="sheetSize" class="form-control" onchange="resizeCanvas()">
+                    <option value="1525x1525">1525 x 1525</option>
+                    <option value="1220x2440">1220 x 2440</option>
+                    <option value="1250x2500">1250 x 2500</option>
+                    <option value="1500x3000">1500 x 3000</option>
+                    <option value="1525x3050">1525 x 3050</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="partName">Название детали:</label>
+                <input type="text" id="partName" class="form-control" placeholder="Введите название">
+            </div>
+            <div class="form-group">
+                <label for="partWidth">Ширина детали (мм):</label>
+                <input type="number" id="partWidth" class="form-control" min="1">
+            </div>
+            <div class="form-group">
+                <label for="partHeight">Длина детали (мм):</label>
+                <input type="number" id="partHeight" class="form-control" min="1">
+            </div>
+            <div class="form-group">
+                <label for="partCount">Количество:</label>
+                <input type="number" id="partCount" class="form-control" value="1" min="1" max="30">
+            </div>
+        </div>
+        <div class="button-group">
+            <button onclick="addPart()"><i class="fas fa-plus"></i> Добавить</button>
+            <button onclick="clearParts()"><i class="fas fa-trash"></i> Очистить</button>
+            <button onclick="optimizeAndDraw()"><i class="fas fa-check"></i> Нарисовать</button>
+            <button onclick="downloadAllCanvases()"><i class="fas fa-download"></i> Скачать</button>
+            <button onclick="saveLayout()"><i class="fas fa-save"></i> Сохранить</button>
+            <button class="reset-button" onclick="resetToDefaults()"><i class="fas fa-undo"></i>Сбросить</button>
+            <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadLayout(event)">
+            <button onclick="document.getElementById('loadFile').click()"><i class="fas fa-upload"></i>
+                Загрузить</button>
+        </div>
+        <div class="layout-container d-flex" id="canvasContainer">
+            <div class="canvas-container flex-grow-1"></div>
+            <div id="partsList" class="parts-list flex-shrink-0"></div>
+        </div>
+        <div class="results" id="results"></div>
+        <div class="report" id="report" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        let parts = [];
+        let sheetWidth, sheetHeight;
+        let cutterThickness = 4; // Толщина фрезы по умолчанию
+        const defaultSheetSize = "1525x1525";
+
+        function resizeCanvas() {
+            const [width, height] = document.getElementById('sheetSize').value.split('x').map(Number);
+            sheetWidth = width;
+            sheetHeight = height;
+            console.log(`Размер канваса изменен: ${sheetWidth}x${sheetHeight}`);
+            draw(); // Обновляем канвас
+        }
+
+        function addPart() {
+            const partName = document.getElementById('partName').value.trim();
+            const partWidth = parseInt(document.getElementById('partWidth').value);
+            const partHeight = parseInt(document.getElementById('partHeight').value);
+            const partCount = parseInt(document.getElementById('partCount').value);
+            if (partName && partWidth > 0 && partHeight > 0 && partCount > 0 && partCount <= 30) {
+                for (let i = 0; i < partCount; i++) {
+                    parts.push({ name: partName, width: partWidth, height: partHeight, x: 0, y: 0, rotated: false });
+                }
+                document.getElementById('partName').value = '';
+                document.getElementById('partWidth').value = '';
+                document.getElementById('partHeight').value = '';
+                document.getElementById('partCount').value = '1';
+                drawPartsList();
+                draw();
+            } else {
+                alert('Название, ширина, высота и количество деталей должны быть указаны и больше нуля.');
+            }
+        }
+
+        function clearParts() {
+            parts = [];
+            drawPartsList();
+            draw();
+        }
+
+        function optimizeAndDraw() {
+            if (parts.length === 0) {
+                alert('Сначала добавьте детали для оптимизации.');
+                return;
+            }
+
+            console.log('Части для оптимизации:', parts); // Отладочный вывод
+
+            const worker = new Worker(URL.createObjectURL(new Blob([`
+                self.onmessage = function (e) {
+                    const { parts, sheetWidth, sheetHeight, cutterThickness } = e.data;
+                    const layouts = optimizeParts(parts, sheetWidth, sheetHeight, cutterThickness);
+                    self.postMessage(layouts);
+                };
+
+                function optimizeParts(parts, sheetWidth, sheetHeight, cutterThickness) {
+                    const layouts = [];
+                    let currentLayout = [];
+
+                    // Сортируем детали по убыванию площади
+                    parts.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+
+                    for (const part of parts) {
+                        let placed = false;
+
+                        // Пытаемся разместить деталь на существующих листах
+                        for (let i = 0; i < layouts.length; i++) {
+                            placed = placePartOnLayout(part, layouts[i], sheetWidth, sheetHeight, cutterThickness);
+                            if (placed) {
+                                break; // Если разместили, выходим из цикла
+                            }
+                        }
+
+                        // Если не удалось разместить на существующих листах, создаем новый
+                        if (!placed) {
+                            currentLayout = [];
+                            placed = placePartOnLayout(part, currentLayout, sheetWidth, sheetHeight, cutterThickness);
+                            if (placed) {
+                                layouts.push(currentLayout);
+                            }
+                        }
+                    }
+
+                    // Проверка на дублирование последнего листа
+                    if (layouts.length > 1 && JSON.stringify(layouts[layouts.length - 1]) === JSON.stringify(layouts[layouts.length - 2])) {
+                        layouts.pop(); // Удаляем последний дублирующийся лист
+                    }
+
+                    return layouts;
+                }
+
+                function placePartOnLayout(part, currentLayout, sheetWidth, sheetHeight, cutterThickness) {
+                    for (let y = 0; y <= sheetHeight - part.height; y++) {
+                        for (let x = 0; x <= sheetWidth - part.width; x++) {
+                            if (canPlace(part, x, y, currentLayout, cutterThickness)) {
+                                part.x = x;
+                                part.y = y;
+                                currentLayout.push(part);
+                                return true; // Успешно размещено
+                            }
+                        }
+                    }
+                    return false; // Не удалось разместить
+                }
+
+                function canPlace(part, x, y, currentLayout, cutterThickness) {
+                    for (const existingPart of currentLayout) {
+                        if (
+                            x < existingPart.x + existingPart.width + cutterThickness &&
+                            x + part.width > existingPart.x &&
+                            y < existingPart.y + existingPart.height + cutterThickness &&
+                            y + part.height > existingPart.y
+                        ) {
+                            return false; // Пересечение с уже размещенной деталью
+                        }
+                    }
+                    return true; // Место свободно
+                }
+            `], { type: 'application/javascript' })));
+
+            worker.postMessage({ parts, sheetWidth, sheetHeight, cutterThickness });
+
+            worker.onmessage = function (e) {
+                const layouts = e.data;
+                if (layouts.length === 0) {
+                    alert('Не удалось разместить детали на листе.');
+                    return;
+                }
+
+                console.log('Полученные раскладки:', layouts); // Отладочный вывод
+                draw(layouts);
+                displayResults(layouts);
+                generateReport(layouts); // Генерация отчета
+                worker.terminate(); // Завершаем работу воркера
+            };
+
+            worker.onerror = function (error) {
+                console.error('Ошибка Web Worker:', error);
+                worker.terminate(); // Завершаем работу воркера при ошибке
+            };
+        }
+
+        function draw(layouts) {
+            const container = document.querySelector('.canvas-container');
+            container.innerHTML = ''; // Очищаем контейнер
+
+            layouts.forEach((layout, index) => {
+                const canvas = document.createElement('canvas');
+
+                // Определяем масштаб в зависимости от того, квадратный ли лист
+                const isSquareSheet = sheetWidth === sheetHeight;
+                const scale = isSquareSheet ?
+                    Math.min(550 / sheetWidth, 550 / sheetHeight) : // Для квадратных листов
+                    Math.min(1300 / sheetWidth, 1100 / sheetHeight); // Для прямоугольных листов
+
+                canvas.width = sheetWidth * scale; // Устанавливаем ширину канваса с учетом масштаба
+                canvas.height = sheetHeight * scale; // Устанавливаем высоту канваса с учетом масштаба
+                const ctx = canvas.getContext('2d');
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'black'; // Цвет рамки канваса
+                ctx.lineWidth = 5;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height); // Рисуем рамку по размерам канваса
+
+                // Рисуем сетку
+                drawGrid(ctx, scale);
+
+                layout.forEach(part => {
+                    ctx.fillStyle = 'rgba(0, 123, 255, 0.5)'; // Полупрозрачный синий
+                    ctx.fillRect(part.x * scale, part.y * scale, part.width * scale, part.height * scale);
+
+                    // Измененные границы
+                    ctx.strokeStyle = 'dark grey'; // Цвет границ (можно изменить на любой другой)
+                    ctx.lineWidth = 1; // Увеличенная толщина границы
+                    ctx.strokeRect(part.x * scale, part.y * scale, part.width * scale, part.height * scale);
+
+                    // Добавляем текстовые метки по центру детали
+                    ctx.fillStyle = 'black'; // Черный цвет для текста
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center'; // Центрируем текст по горизонтали
+                    ctx.textBaseline = 'middle'; // Центрируем текст по вертикали
+                    const centerX = (part.x + part.width / 2) * scale; // Центрируем по X
+                    const centerY = (part.y + part.height / 2) * scale; // Центрируем по Y
+
+                    // Рисуем текст
+                    ctx.fillText(`Ш: ${part.width} мм`, centerX, centerY); // Ширина детали
+                    ctx.fillText(`Д: ${part.height} мм`, centerX, centerY + 10); // Длина детали
+                });
+
+                const title = document.createElement('h3');
+                title.innerText = `Лист ${index + 1}`;
+                container.appendChild(title);
+                container.appendChild(canvas);
+            });
+        }
+
+        function drawGrid(ctx, scale) {
+            ctx.strokeStyle = 'lightgray';
+            ctx.lineWidth = 0.5;
+
+            // Рисуем вертикальные линии
+            for (let x = 0; x <= sheetWidth; x += 100) {
+                ctx.beginPath();
+                ctx.moveTo(x * scale, 0);
+                ctx.lineTo(x * scale, sheetHeight * scale);
+                ctx.stroke();
+            }
+
+            // Рисуем горизонтальные линии
+            for (let y = 0; y <= sheetHeight; y += 100) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * scale);
+                ctx.lineTo(sheetWidth * scale, y * scale);
+                ctx.stroke();
+            }
+        }
+
+        function displayResults(layouts) {
+            const totalSheets = layouts.length;
+            const partCounts = calculatePartCounts();
+            // Здесь можно добавить вывод результатов, если нужно
+        }
+
+        function generateReport(layouts) {
+            const reportDiv = document.getElementById('report');
+            reportDiv.innerHTML = '<h3>Отчет о раскладке</h3>';
+
+            const totalParts = parts.length;
+            const usedSheets = layouts.length;
+
+            reportDiv.innerHTML += `<p>Общее количество деталей: ${totalParts}</p>`;
+            reportDiv.innerHTML += `<p>Количество использованных листов: ${usedSheets}</p>`;
+
+            // Добавляем информацию о деталях
+            reportDiv.innerHTML += '<h4>Детали:</h4>';
+            const partCounts = calculatePartCounts();
+            reportDiv.innerHTML += '<ul>';
+            partCounts.forEach(part => {
+                reportDiv.innerHTML += `<li>${part.name}: ${part.count} шт.</li>`;
+            });
+            reportDiv.innerHTML += '</ul>';
+        }
+
+        function drawPartsList() {
+            const partsList = document.getElementById('partsList');
+            partsList.innerHTML = '';
+            parts.forEach((part, index) => {
+                const partDiv = document.createElement('div');
+                partDiv.className = 'part-item';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = part.name;
+                nameInput.onchange = (e) => updatePart(index, e.target.value, part.width, part.height);
+                const widthInput = document.createElement('input');
+                widthInput.type = 'number';
+                widthInput.value = part.width;
+                widthInput.onchange = (e) => updatePart(index, part.name, e.target.value, part.height);
+                const heightInput = document.createElement('input');
+                heightInput.type = 'number';
+                heightInput.value = part.height;
+                heightInput.onchange = (e) => updatePart(index, part.name, part.width, e.target.value);
+                const rotateButton = document.createElement('button');
+                rotateButton.innerHTML = '<i class="fas fa-sync-alt"></i> Повернуть';
+                rotateButton.className = 'btn btn-primary btn-sm'; // Изменено на btn-primary
+                rotateButton.onclick = () => {
+                    part.rotated = !part.rotated;
+                    const temp = part.width;
+                    part.width = part.height;
+                    part.height = temp;
+                    drawPartsList();
+                    draw();
+                };
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '<i class="fas fa-trash"></i> Удалить';
+                deleteButton.className = 'btn btn-primary btn-sm'; // Изменено на btn-primary
+                deleteButton.onclick = () => removePart(index);
+                partDiv.appendChild(nameInput);
+                partDiv.appendChild(widthInput);
+                partDiv.appendChild(document.createTextNode(' x '));
+                partDiv.appendChild(heightInput);
+                partDiv.appendChild(document.createTextNode(' мм '));
+                partDiv.appendChild(rotateButton);
+                partDiv.appendChild(deleteButton);
+                partsList.appendChild(partDiv);
+            });
+        }
+
+        function updatePart(index, name, width, height) {
+            parts[index].name = name;
+            parts[index].width = parseInt(width);
+            parts[index].height = parseInt(height);
+            drawPartsList();
+            draw();
+        }
+
+        function removePart(index) {
+            parts.splice(index, 1);
+            drawPartsList();
+            draw();
+        }
+
+        async function downloadAllCanvases() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape', 'pt', 'A4'); // Создаем PDF в альбомной ориентации
+
+            const canvases = document.querySelectorAll('.canvas-container canvas');
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // Ширина страницы PDF
+            const pdfHeight = pdf.internal.pageSize.getHeight(); // Высота страницы PDF
+
+            for (let i = 0; i < canvases.length; i++) {
+                const canvas = canvases[i];
+                const imgData = canvas.toDataURL('image/png');
+
+                // Добавляем изображение в PDF
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                if (i < canvases.length - 1) {
+                    pdf.addPage(); // Добавляем новую страницу, если это не последняя картинка
+                }
+            }
+
+            pdf.save('layouts.pdf'); // Сохраняем PDF с именем 'layouts.pdf'
+        }
+
+        function calculatePartCounts() {
+            const counts = {};
+            parts.forEach(part => {
+                if (!counts[part.name]) {
+                    counts[part.name] = { name: part.name, count: 0 };
+                }
+                counts[part.name].count++;
+            });
+            return Object.values(counts);
+        }
+
+        function saveLayout() {
+            const layoutData = JSON.stringify(parts);
+            const blob = new Blob([layoutData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'layout.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadLayout(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const layoutData = JSON.parse(e.target.result);
+                    parts = layoutData;
+                    drawPartsList();
+                    draw();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function resetToDefaults() {
+            parts = [];
+            document.getElementById('partName').value = '';
+            document.getElementById('partWidth').value = '';
+            document.getElementById('partHeight').value = '';
+            document.getElementById('partCount').value = '1';
+            document.getElementById('sheetSize').value = defaultSheetSize;
+            resizeCanvas();
+            drawPartsList();
+            draw();
+        }
+
+        // Инициализация по умолчанию
+        document.addEventListener('DOMContentLoaded', function () {
+            resetToDefaults();
+        });
+    </script>
+</body>
+
+</html>
